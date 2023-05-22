@@ -347,20 +347,22 @@ class MainLoopState(object):
             logging.warning('Night camera baudrate less than 115200, expect slow image capture!')
 
     def heating_control(self, turn_on, day_or_night):
+        control_day_cam = hasattr(self.day_camera, "heating") and not (self.day_camera is None)
+        control_night_cam = hasattr(self.night_camera, "heating") and not (self.night_camera is None)
         if day_or_night is 'day' and turn_on:
-            if not self.day_camera.cam is None:
+            if control_day_cam:
                 self.day_camera.cam.activate_heater()
-            if not self.night_camera.cam is None:
+            if control_night_cam:
                 self.night_camera.cam.deactivate_heater()
         elif day_or_night is 'night' and turn_on:
-            if not self.day_camera.cam is None:
+            if control_day_cam:
                 self.day_camera.cam.deactivate_heater()
-            if not self.night_camera.cam is None:
+            if control_night_cam:
                 self.night_camera.cam.activate_heater()
         else:
-            if not self.day_camera.cam is None:
+            if control_day_cam:
                 self.day_camera.cam.deactivate_heater()
-            if not self.night_camera.cam is None:
+            if control_night_cam:
                 self.night_camera.cam.deactivate_heater()
 
 def main_loop_step(config, user, loopstate):

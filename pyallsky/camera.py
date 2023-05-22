@@ -250,7 +250,7 @@ def autobaud(ser, count=3):
     '''
     found = False
     for rate in sorted(BAUD_RATE, key=BAUD_RATE.get)[:-2]:
-        logging.debug('Testing baud rate %s', rate)
+        logging.info('Testing baud rate %s', rate)
         ser.setBaudrate(rate)
         found = check_communications(ser, count)
         if found:
@@ -286,6 +286,8 @@ class AllSkyCamera(object):
     '''
     def __init__(self, device):
         ser = serial.Serial(device)
+
+        logging.info('Connecting to device {}'.format(device))
 
         # defaults taken from the manual
         ser.setBaudrate(9600)

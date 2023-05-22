@@ -161,6 +161,7 @@ def get_device_configuration(config, section):
     d['rotate180'] = config.getboolean(section, 'rotate180')
     d['overlay'] = config.getboolean(section, 'overlay')
     d['heating'] = config.getboolean(section, 'heating')
+    d['use'] = config.getboolean(section, 'use')
 
     return AllSkyDeviceConfiguration(**d)
 
@@ -212,11 +213,14 @@ def get_configuration(filename):
 class AllSkyCameraInfo(object):
     '''Object to hold information about a single AllSkyCamera'''
     def __init__(self, device_config):
-        self.cam = AllSkyCamera(device_config.device)
-        self.baudrate = self.cam.get_baudrate()
-        self.serialno = self.cam.serial_number()
-        self.fwvers = self.cam.firmware_version()
-        self.heating = False
+        if device_config.use:
+            self.cam = AllSkyCamera(device_config.device)
+            self.baudrate = self.cam.get_baudrate()
+            self.serialno = self.cam.serial_number()
+            self.fwvers = self.cam.firmware_version()
+            self.heating = False
+        else:
+            self.cam = None
 
 def make_empty_dark():
     '''Create an empty dark current image, many years in the past'''
@@ -369,6 +373,10 @@ def main_loop_step(config, user, loopstate):
 
     # fetch parameters from the configuration for the correct camera
     device_config = getattr(config, sun_ephem.state)
+
+    if camera_info.cam is None:
+        logging.info("Camera for {} not in use.".format(sun_ephem.state))
+        return
 
     # log any change in heating state
     if camera_info.heating is not device_config.heating:

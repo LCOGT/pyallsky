@@ -374,7 +374,7 @@ def main_loop_step(config, user, loopstate):
     # fetch parameters from the configuration for the correct camera
     device_config = getattr(config, sun_ephem.state)
 
-    if camera_info.cam is None:
+    if not device_config.use:
         logging.info("Camera for {} not in use.".format(sun_ephem.state))
         return
 

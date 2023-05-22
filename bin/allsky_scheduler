@@ -348,14 +348,20 @@ class MainLoopState(object):
 
     def heating_control(self, turn_on, day_or_night):
         if day_or_night is 'day' and turn_on:
-            self.day_camera.cam.activate_heater()
-            self.night_camera.cam.deactivate_heater()
+            if not self.day_camera is None:
+                self.day_camera.cam.activate_heater()
+            if not self.night_camera is None:
+                self.night_camera.cam.deactivate_heater()
         elif day_or_night is 'night' and turn_on:
-            self.day_camera.cam.deactivate_heater()
-            self.night_camera.cam.activate_heater()
+            if not self.day_camera is None:
+                self.day_camera.cam.deactivate_heater()
+            if not self.night_camera is None:
+                self.night_camera.cam.activate_heater()
         else:
-            self.day_camera.cam.deactivate_heater()
-            self.night_camera.cam.deactivate_heater()
+            if not self.day_camera is None:
+                self.day_camera.cam.deactivate_heater()
+            if not self.night_camera is None:
+                self.night_camera.cam.deactivate_heater()
 
 def main_loop_step(config, user, loopstate):
     '''Run a single step of the main loop'''

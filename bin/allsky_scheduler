@@ -329,7 +329,7 @@ class MainLoopState(object):
             sys.exit(1)
 
         # check baudrate
-        if self.camera_info['day'].baudrate < 115200:
+        if (not self.camera_info['day'].cam is None) and self.camera_info['day'].baudrate < 115200:
             logging.warning('Day camera baudrate less than 115200, expect slow image capture!')
 
         # fetch static information about night camera
@@ -343,7 +343,7 @@ class MainLoopState(object):
             sys.exit(1)
 
         # check baudrate
-        if self.camera_info['night'].baudrate < 115200:
+        if (not self.camera_info['night'].cam is None) and self.camera_info['night'].baudrate < 115200:
             logging.warning('Night camera baudrate less than 115200, expect slow image capture!')
 
     def heating_control(self, turn_on, day_or_night):

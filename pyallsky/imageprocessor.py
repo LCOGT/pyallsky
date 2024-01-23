@@ -45,6 +45,8 @@ class AllSkyImageProcessor(object):
         self.image = image
         self.config = device_config
         self.fits_headers = []
+        self.logger = logging.getLogger('AllSkyImageProcessor')
+
 
         # standard FITS headers
         self.add_fits_header('DATAMODE', '1X1 BIN', 'Data Mode')
@@ -76,11 +78,12 @@ class AllSkyImageProcessor(object):
     def add_fits_header(self, name, value, comment):
         '''Add an extra header to FITS files'''
         d = {
-            'name': name,
-            'value': value,
-            'comment': comment,
+            'name': name.encode('utf-8'),
+            'value': value.encode('utf-8'),
+            'comment': comment.encode('utf-8'),
         }
-
+        # log the header item
+        self.logger.info('Adding FITS card: {} = {} {}'.format(d['name'], d['value'], d['comment']))
         self.fits_headers.append(d)
 
     def save(self, filename):

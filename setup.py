@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name = 'pyallsky',
-    version = '1.5.0',
+    version = '1.5.0-debug',
     description = 'Python Control of SBIG AllSky 340/340C Camera',
     url = 'https://github.com/LCOGT/pyallsky',
     author = 'Las Cumbres Observatory Software Team',

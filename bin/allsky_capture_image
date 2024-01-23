@@ -82,7 +82,7 @@ def main():
         image = capture_image(device_config.device, device_config.exposure)
 
         # create the image processor
-        processor = AllSkyImageProcessor(image, device_config, dark=None)
+        processor = AllSkyImageProcessor(image, device_config, logging.getLogger(), dark=None)
 
         # save to all file types requested
         for filename in args.filename:

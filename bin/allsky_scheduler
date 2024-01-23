@@ -340,16 +340,16 @@ class MainLoopState(object):
             self.day_camera.cam.deactivate_heater()
             self.night_camera.cam.deactivate_heater()
 
-def main_loop_step(config, user, loopstate):
+def main_loop_step(config, user, loopstate, logger):
     '''Run a single step of the main loop'''
     # get current UTC time
     utctime = datetime.datetime.utcnow()
-    logging.info('Start loop at UTC time: %s', utctime)
+    logger.info('Start loop at UTC time: %s', utctime)
 
 
     # get sun ephemeris
     sun_ephem = ephem_get_sun(user, utctime)
-    logging.info('It is currently: %s', sun_ephem.state)
+    logger.info('It is currently: %s', sun_ephem.state)
 
     # fetch static camera information for the correct camera
     camera_info = loopstate.camera_info[sun_ephem.state]
@@ -360,13 +360,13 @@ def main_loop_step(config, user, loopstate):
     # log any change in heating state
     if camera_info.heating is not device_config.heating:
         on_or_off = "on" if device_config.heating else "off"
-        logging.info('Turning {} camera heating {}'.format(sun_ephem.state, on_or_off))
+        logger.info('Turning {} camera heating {}'.format(sun_ephem.state, on_or_off))
         camera_info.heating = device_config.heating
 
     # calculate the compensated exposure time based on the sun position
-    logging.info('Nominal exposure: %s', device_config.exposure)
+    logger.info('Nominal exposure: %s', device_config.exposure)
     exposure = ephem_calculate_exposure(sun_ephem, device_config.exposure)
-    logging.info('Compensated exposure: %s', exposure)
+    logger.info('Compensated exposure: %s', exposure)
 
     loopstate.heating_control(device_config.heating, sun_ephem.state)
 
@@ -379,19 +379,19 @@ def main_loop_step(config, user, loopstate):
     # if dark subtraction is enabled, and we are at full exposure length,
     # then we will do dark current subtraction
     if device_config.dark and exposure == device_config.exposure:
-        logging.info('Dark Current Subtraction Enabled!')
+        logger.info('Dark Current Subtraction Enabled!')
 
         # if the last dark was taken too long ago, we will take a new one
         age = utctime - loopstate.dark.timestamp
         if age > datetime.timedelta(seconds=config.dark_interval):
-            logging.info('Capturing Dark')
+            logger.info('Capturing Dark')
             loopstate.dark = capture_image_device(device_config.device, exposure, dark=True)
 
         # use the dark current image this time around the loop
         dark_image = loopstate.dark
 
     # create image processor
-    processor = AllSkyImageProcessor(config.siteid, image, device_config, dark_image)
+    processor = AllSkyImageProcessor(config.siteid, image, device_config, logger, dark_image)
 
     # add extra FITS headers
     processor.add_fits_header('ORIGIN',   'LCOGT', 'Organization responsible for the data')
@@ -406,10 +406,10 @@ def main_loop_step(config, user, loopstate):
     # save images in requested formats
     save_images(config, sun_ephem, processor)
 
-def main_loop(config):
+def main_loop(config, logger):
     '''The main loop of the program, runs forever'''
     # log privilege levels for debugging
-    logging.warning('Running with privileges: uid=%s gid=%s groups=%s', os.getuid(), os.getgid(), os.getgroups())
+    logger.warning('Running with privileges: uid=%s gid=%s groups=%s', os.getuid(), os.getgid(), os.getgroups())
 
     # setup ephemeris user
     user = ephem_get_user(
@@ -428,11 +428,11 @@ def main_loop(config):
     # run main loop
     while True:
         try:
-            main_loop_step(config, user, loopstate)
+            main_loop_step(config, user, loopstate, logger)
         except Exception, ex:
-            logging.error('Exception: %s', str(ex))
+            logger.error('Exception: %s', str(ex))
             for line in traceback.format_exc().splitlines():
-                logging.error(line)
+                logger.error(line)
 
         # calculate the next expected boundary time
         boundary += datetime.timedelta(seconds=config.interval)
@@ -441,13 +441,13 @@ def main_loop(config):
         # minute boundary to give the images predictable timestamps
         utctime = datetime.datetime.utcnow()
         if boundary < utctime:
-            logging.debug('Already past boundary: %s', boundary)
+            logger.debug('Already past boundary: %s', boundary)
             boundary = get_next_minute_boundary(utctime)
 
         # wait until the next loop start time
         sleep_until(boundary)
 
-def set_serialport_groups(config):
+def set_serialport_groups(config, logger):
     '''
     Runs before dropping privileges to set our process to belong to the group
     or groups that own the serial port devices.
@@ -458,11 +458,11 @@ def set_serialport_groups(config):
     ]
 
     groups = list(set(groups))
-    logging.info('Setting group membership to: %s', groups)
+    logger.info('Setting group membership to: %s', groups)
 
     os.setgroups(groups)
 
-    logging.info('Setting umask to: 0022')
+    logger.info('Setting umask to: 0022')
     os.umask(0o22)
 
 def main():
@@ -503,9 +503,9 @@ def main():
     daemon = Daemonize(
         app='allsky_scheduler',
         pid=args.pidfile,
-        action=lambda: main_loop(config),
+        action=lambda: main_loop(config, logging.getLogger()),
         keep_fds=[logstream.fileno(), ],
-        privileged_action=lambda: set_serialport_groups(config),
+        privileged_action=lambda: set_serialport_groups(config, logging.getLogger()),
         user=args.user,
         group=args.group,
         logger=logging.getLogger(),

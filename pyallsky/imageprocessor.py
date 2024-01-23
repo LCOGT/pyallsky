@@ -4,7 +4,6 @@
 Image processing for SBIG AllSky 340/340C
 '''
 
-import logging
 from collections import namedtuple
 
 import fitsio
@@ -33,7 +32,7 @@ AllSkyDeviceConfiguration = namedtuple('AllSkyDeviceConfiguration', [
 class AllSkyImageProcessor(object):
     '''Image processing for SBIG AllSky 340/340C camera'''
 
-    def __init__(self, siteid, image, device_config, dark=None):
+    def __init__(self, siteid, image, device_config, logger, dark=None):
         '''
         Create an AllSkyImageProcessor
 
@@ -45,7 +44,7 @@ class AllSkyImageProcessor(object):
         self.image = image
         self.config = device_config
         self.fits_headers = []
-        self.logger = logging.getLogger('AllSkyImageProcessor')
+        self.logger = logger
 
 
         # standard FITS headers
@@ -78,9 +77,9 @@ class AllSkyImageProcessor(object):
     def add_fits_header(self, name, value, comment):
         '''Add an extra header to FITS files'''
         d = {
-            'name': name.encode('utf-8'),
-            'value': value.encode('utf-8'),
-            'comment': comment.encode('utf-8'),
+            'name': name,
+            'value': value,
+            'comment': comment,
         }
         # log the header item
         self.logger.info('Adding FITS card: {} = {} {}'.format(d['name'], d['value'], d['comment']))

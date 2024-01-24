@@ -400,8 +400,8 @@ def main_loop_step(config, user, loopstate, logger):
     processor.add_fits_header('LATITUDE', config.latitude, '[deg North] Telescope Latitude')
     processor.add_fits_header('HEIGHT',   config.elevation, '[m] Altitude of Telescope above sea level')
     processor.add_fits_header('DAYNIGHT', sun_ephem.state.upper(), 'DAY or NIGHT')
-    processor.add_fits_header('SERIALNO', camera_info.serialno, 'Camera Serial Number')
-    processor.add_fits_header('FWVERS',   camera_info.fwvers, 'Camera Firmware Version')
+#    processor.add_fits_header('SERIALNO', camera_info.serialno, 'Camera Serial Number')
+#    processor.add_fits_header('FWVERS',   camera_info.fwvers, 'Camera Firmware Version')
 
     # save images in requested formats
     save_images(config, sun_ephem, processor)

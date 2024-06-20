@@ -89,7 +89,7 @@ def main():
             logging.info('Saving to file %s', filename)
             processor.save(filename)
 
-    except Exception, ex:
+    except Exception as ex:
         logging.error('Exception: %s', str(ex))
         for line in traceback.format_exc().splitlines():
             logging.error(line)

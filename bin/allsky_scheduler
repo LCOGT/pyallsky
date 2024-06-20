@@ -19,7 +19,7 @@ import logging
 import argparse
 import datetime
 import traceback
-import ConfigParser
+import configparser
 from collections import namedtuple
 
 import ephem
@@ -168,9 +168,9 @@ def get_configuration(filename):
     '''Read the general section from the configuration file into a GeneralConfiguration object'''
 
     # read configuration file
-    config = ConfigParser.ConfigParser()
+    config = configparser.ConfigParser()
     with open(filename, 'r') as f:
-        config.readfp(f)
+        config.read_file(f)
 
     d = {}
     d['siteid'] = config.get('general', 'siteid')
@@ -286,7 +286,7 @@ def save_images(config, sun_ephem, processor):
 
         try:
             os.symlink(source, link_name)
-        except OSError, ex:
+        except OSError as ex:
             logging.error('Symlink creation error: %s', str(ex))
 
 ################################################################################
@@ -304,7 +304,7 @@ class MainLoopState(object):
         # fetch static information about day camera
         try:
             self.camera_info['day'] = AllSkyCameraInfo(config.day)
-        except Exception, ex:
+        except Exception as ex:
             logging.error('Error communicating with day camera: %s', str(ex))
             for line in traceback.format_exc().splitlines():
                 logging.error(line)
@@ -318,7 +318,7 @@ class MainLoopState(object):
         # fetch static information about night camera
         try:
             self.camera_info['night'] = AllSkyCameraInfo(config.night)
-        except Exception, ex:
+        except Exception as ex:
             logging.error('Error communicating with night camera: %s', str(ex))
             for line in traceback.format_exc().splitlines():
                 logging.error(line)
@@ -330,10 +330,10 @@ class MainLoopState(object):
             logging.warning('Night camera baudrate less than 115200, expect slow image capture!')
 
     def heating_control(self, turn_on, day_or_night):
-        if day_or_night is 'day' and turn_on:
+        if day_or_night == 'day' and turn_on:
             self.day_camera.cam.activate_heater()
             self.night_camera.cam.deactivate_heater()
-        elif day_or_night is 'night' and turn_on:
+        elif day_or_night == 'night' and turn_on:
             self.day_camera.cam.deactivate_heater()
             self.night_camera.cam.activate_heater()
         else:
@@ -429,7 +429,7 @@ def main_loop(config):
     while True:
         try:
             main_loop_step(config, user, loopstate)
-        except Exception, ex:
+        except Exception as ex:
             logging.error('Exception: %s', str(ex))
             for line in traceback.format_exc().splitlines():
                 logging.error(line)

@@ -210,7 +210,7 @@ def check_communications(ser, count=3, required_successes=2):
     '''
     successes = 0
 
-    for i in xrange(count):
+    for i in range(count):
         logging.debug('Checking current communication settings, try %d', i)
 
         if serial_expect(ser, 'E', 'O', 0.1):
@@ -514,7 +514,7 @@ class AllSkyCamera(object):
 
         return -- the raw pixel data from the camera as a Python array of unsigned bytes
         '''
-        for i in xrange(tries):
+        for i in range(tries):
             logging.debug('Get Image Block: try %d', i)
 
             # not the first try, transmit checksum error so the camera will try again

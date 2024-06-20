@@ -37,7 +37,7 @@ def main():
     try:
         logging.debug('Attempting baud rate change from %d to %d', original_baud_rate, args.baudrate)
         cam.set_baudrate(args.baudrate)
-    except Exception, ex:
+    except Exception as ex:
         logging.error('Failed: %s', str(ex))
         sys.exit(1)
 

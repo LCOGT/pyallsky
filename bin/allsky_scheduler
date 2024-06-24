@@ -205,8 +205,8 @@ class AllSkyCameraInfo(object):
             self.cam = TcpCamera(host, port)
         else:
             self.cam = SerialCamera(device_config.device)
+            self.baudrate = self.cam.get_baudrate()
 
-        self.baudrate = self.cam.get_baudrate()
         self.serialno = self.cam.serial_number()
         self.fwvers = self.cam.firmware_version()
         self.heating = False

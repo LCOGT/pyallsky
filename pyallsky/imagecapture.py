@@ -9,9 +9,9 @@ import datetime
 import logging
 from collections import namedtuple
 
-from pyallsky import AllSkyCamera
 from pyallsky.serial_camera import SerialCamera
 from pyallsky.tcp_camera import TcpCamera
+from pyallsky.util import is_network_device
 
 # Tuple to hold all of the data about an exposure taken by an
 # SBIG AllSky 340/340C camera
@@ -25,13 +25,6 @@ def show_progress(pct):
     '''Method to display image transfer progress depending on logging level'''
     logging.info('Transfer progress: %.2f%%', pct)
 
-
-def is_network_device(device):
-    # a network device is identified by having a host followed by a colon followed by an integer port
-    if ':' in device:
-        host, port = device.split(':')
-        return bool(host and port.isdigit())
-    return False
 
 def capture_image_device(device_config, exposure, dark=False):
     '''

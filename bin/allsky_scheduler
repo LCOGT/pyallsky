@@ -33,7 +33,7 @@ from pyallsky import capture_image_device
 from pyallsky import is_supported_file_type
 from pyallsky.serial_camera import SerialCamera
 from pyallsky.tcp_camera import TcpCamera
-from pyallsky.util import setup_logging
+from pyallsky.util import setup_logging, is_network_device
 
 ################################################################################
 # Sun Ephemeris Calculations
@@ -200,10 +200,11 @@ def get_configuration(filename):
 class AllSkyCameraInfo(object):
     '''Object to hold information about a single AllSkyCamera'''
     def __init__(self, device_config):
-        if device_config.device:
-            self.cam = SerialCamera(device_config.device)
+        if is_network_device(device_config.device):
+            host, port = device_config.device.split(':')
+            self.cam = TcpCamera(host, port)
         else:
-            self.cam = TcpCamera(device_config.host, device_config.port)
+            self.cam = SerialCamera(device_config.device)
 
         self.baudrate = self.cam.get_baudrate()
         self.serialno = self.cam.serial_number()
@@ -457,6 +458,9 @@ def set_serialport_groups(config):
     Runs before dropping privileges to set our process to belong to the group
     or groups that own the serial port devices.
     '''
+    if ':' in config.day.device or ':' in config.night.device:
+        logging.info('Skipping group setup for TCP devices')
+        return
     groups = [
         os.stat(config.day.device).st_gid,
         os.stat(config.night.device).st_gid,

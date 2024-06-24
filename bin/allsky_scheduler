@@ -26,12 +26,13 @@ import ephem
 import numpy
 from daemonize import Daemonize
 
-from pyallsky import AllSkyCamera
 from pyallsky import AllSkyDeviceConfiguration
 from pyallsky import AllSkyImage
 from pyallsky import AllSkyImageProcessor
 from pyallsky import capture_image_device
 from pyallsky import is_supported_file_type
+from pyallsky.serial_camera import SerialCamera
+from pyallsky.tcp_camera import TcpCamera
 from pyallsky.util import setup_logging
 
 ################################################################################
@@ -199,7 +200,11 @@ def get_configuration(filename):
 class AllSkyCameraInfo(object):
     '''Object to hold information about a single AllSkyCamera'''
     def __init__(self, device_config):
-        self.cam = AllSkyCamera(device_config.device)
+        if device_config.device:
+            self.cam = SerialCamera(device_config.device)
+        else:
+            self.cam = TcpCamera(device_config.host, device_config.port)
+
         self.baudrate = self.cam.get_baudrate()
         self.serialno = self.cam.serial_number()
         self.fwvers = self.cam.firmware_version()
@@ -371,7 +376,7 @@ def main_loop_step(config, user, loopstate):
     loopstate.heating_control(device_config.heating, sun_ephem.state)
 
     # capture the next image / control the heater
-    image = capture_image_device(device_config.device, exposure)
+    image = capture_image_device(device_config, exposure)
 
     # we don't have a dark current image yet
     dark_image = None

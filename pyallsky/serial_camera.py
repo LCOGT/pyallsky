@@ -13,6 +13,7 @@ BAUD_RATE = {9600: 'B0',
              230400: 'B5',
              460800: 'B6'}
 
+
 class SerialCameraException:
     pass
 
@@ -25,6 +26,7 @@ class SerialCamera(AbstractCamera):
 
     Automatically determines the baud rate necessary for communication.
     '''
+
     def __init__(self, device):
         ser = serial.Serial(device)
 
@@ -45,23 +47,9 @@ class SerialCamera(AbstractCamera):
         self.serial_connection = ser
 
     def camera_tx(self, data):
-        '''
-        Write data to a serial port with a timeout
-
-        ser -- the serial.Serial() to receive from
-        data -- the data to send
-        timeout -- the maximum number of seconds to try to send data
-        '''
         self.serial_connection.write(data)
 
     def camera_rx(self, nbytes, timeout=0.5):
-        '''
-        Receive data from a serial port with a timeout
-
-        ser -- the serial.Serial() to receive from
-        nbytes -- the maximum number of bytes to receive
-        timeout -- the maximum number of seconds to wait for data
-        '''
         tstart = time.time()
         data = ''
 
@@ -81,15 +69,6 @@ class SerialCamera(AbstractCamera):
             data += self.serial_connection.read(remain)
 
     def camera_rx_until(self, terminator, timeout=5.0):
-        '''
-        Receive data from a serial port until a certain terminator character is received
-
-        ser -- the serial.Serial() to receive from
-        terminator -- the single character which terminates the receive operation
-        timeout -- the maximum amount of time to wait
-
-        Returns all of the data read up to (but not including) the terminator
-        '''
         tstart = time.time()
         data = ''
 
@@ -110,14 +89,6 @@ class SerialCamera(AbstractCamera):
         return data
 
     def camera_timeout_calc(self, nbytes):
-        '''
-        Calculate the required timeout to transmit a certain number of bytes
-        based on the current baud rate of the serial port
-
-        nbytes -- the number of bytes that will be transmitted
-
-        return -- the time required to transmit in seconds
-        '''
         # (bits_per_second / number_of_bits) * overhead_fudge_factor
         return (self.serial_connection.getBaudrate() / (nbytes * 8)) * 1.5
 

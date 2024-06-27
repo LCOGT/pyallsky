@@ -1,0 +1,8 @@
+pyallsky:
+  image: allsky:latest
+  volumes:
+    - "/opt/camera-panel/etc:/opt/camera-panel/etc"
+    - "/mnt/data/allsky:/mnt/data/allsky"
+  mem_limit: 8192m
+  restart: always
+

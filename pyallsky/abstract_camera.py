@@ -6,7 +6,7 @@ import time
 from abc import ABC, abstractmethod
 
 class AllSkyException(Exception):
-    '''Specific exception class for errors from this code'''
+    '''Exception class for errors from this code'''
     pass
 
 # Test Commands
@@ -63,18 +63,45 @@ class AbstractCamera(ABC):
 
     @abstractmethod
     def camera_tx(self, data):
+        '''
+        Write data to the camera.
+
+        data -- the data to send
+        '''
         pass
 
     @abstractmethod
     def camera_rx(self, nbytes, timeout=0.5):
+        '''
+        Receive data from camerat with a timeout
+
+        nbytes -- the maximum number of bytes to receive
+        timeout -- the maximum number of seconds to wait for data
+        '''
         pass
 
     @abstractmethod
     def camera_rx_until(self, terminator, timeout=5.0):
+        '''
+        Receive data from a camera until a certain terminator character is received
+
+        terminator -- the single character which terminates the receive operation
+        timeout -- the maximum amount of time to wait
+
+        Returns all the data read up to (but not including) the terminator
+        '''
         pass
 
     @abstractmethod
     def camera_timeout_calc(self, nbytes):
+        '''
+        Calculate the required timeout to transmit a certain number of bytes
+        based on the particular implementation of the camera device.
+
+        nbytes -- the number of bytes that will be transmitted
+
+        return -- the time required to transmit in seconds
+        '''
         pass
 
     def firmware_version(self):

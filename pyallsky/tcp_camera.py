@@ -7,6 +7,12 @@ FIXED_TCP_IMAGE_READ_TIMEOUT_SECONDS = 30
 
 
 class TcpCamera(AbstractCamera):
+    '''
+    Class to interact with the SBIG AllSky 340/340C camera via a Moxa NPort 5150A
+    serial to network convertor via tcp protocol, and providing a pythonic
+    api to access the device.
+
+    '''
     def __init__(self, host, port):
         self.host = host
         self.port = port
@@ -21,31 +27,8 @@ class TcpCamera(AbstractCamera):
 
     def camera_tx(self, data):
         print('sending data: %s' % data)
-        #data += '\n'
         for char in data:
             self.socket.send(char.encode())
-
-    # def camera_rx(self, nbytes, timeout=FIXED_TCP_IMAGE_READ_TIMEOUT_SECONDS):
-    #     tstart = time.time()
-    #     self.socket.settimeout(timeout)
-    #     data = b''
-    #
-    #     while True:
-    #         # timeout has passed, break out of the loop
-    #         tcurrent = time.time()
-    #         tdiff = tcurrent - tstart
-    #         if tdiff > timeout:
-    #             break
-    #
-    #         # we have all the bytes, break out of the loop
-    #         remain = nbytes - len(data)
-    #         if remain == 0:
-    #             break
-    #
-    #         # append more bytes as they come in
-    #         data += self.socket.recv(1)
-    #
-    #     return data
 
     def camera_rx(self, nbytes, timeout=FIXED_TCP_IMAGE_READ_TIMEOUT_SECONDS):
         tstart = time.time()

@@ -15,9 +15,9 @@ from .imageprocessor import AllSkyImageProcessor
 from .imageprocessor import is_supported_file_type
 
 # import all files as sub-modules
-import abstract_camera
-import serial_camera
-import camera
-import imagecapture
-import imageprocessor
-import util
+from . import abstract_camera
+from . import serial_camera
+from . import camera
+from . import imagecapture
+from . import imageprocessor
+from . import util

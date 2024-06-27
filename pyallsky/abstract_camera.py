@@ -86,10 +86,7 @@ class AbstractCamera(ABC):
         Example: T1.16 - "Test v1.16"
         '''
         self.send_command(GET_FVERSION)
-        data = self.serial_rx(2)
-
-        # convert to integers
-        data = array.array('B', data)
+        data = self.camera_rx(2)
 
         version_type = (data[0] & 0x80) and 'T' or 'R'
         version_major = (data[0] & 0x7f)
@@ -162,8 +159,8 @@ class AbstractCamera(ABC):
         # choose between light/dark exposure type
         exptype = EXP_DARK_ONLY if dark else EXP_LIGHT_ONLY
 
-        exp = struct.pack('I', exptime)[:3]
-        com = TAKE_IMAGE + exp[::-1] + BIN_1X1_FULL + exptype
+        exp = struct.pack('I', int(exptime))[:3]
+        com = TAKE_IMAGE + exp[::-1].decode() + BIN_1X1_FULL + exptype
 
         timestamp = datetime.datetime.utcnow()
 
@@ -173,7 +170,7 @@ class AbstractCamera(ABC):
         # wait until the exposure is finished, with plenty of timing slack to
         # handle hardware latency on very short exposures (measurements show
         # that the camera has ~1 second of hardware latency)
-        timeout = exposure + 5.0
+        timeout = exposure + 15.0
         self.camera_rx_until(EXPOSURE_DONE, timeout)
         logging.debug('Exposure complete')
 
@@ -208,7 +205,7 @@ class AbstractCamera(ABC):
             # read the data and checksum
             logging.debug('Get Image Block: attempt to read %d bytes in %s seconds', nbytes, timeout)
             data = self.camera_rx(nbytes, timeout)
-            csum_byte = self.camera_rx(self, 1)
+            csum_byte = self.camera_rx(1)
             logging.debug('Get Image Block: finished reading data')
 
             # not enough bytes, therefore transfer failed
@@ -255,7 +252,7 @@ class AbstractCamera(ABC):
         return -- the raw pixel data from the camera as a Python array of unsigned bytes
         '''
         # Calculate number of sub-blocks expected
-        blocks_expected = (640 * 480) / 4096
+        blocks_expected = 75 # (640 * 480) / 4096
 
         # Download Image
         self.send_command(XFER_IMAGE)
@@ -263,7 +260,7 @@ class AbstractCamera(ABC):
         data = array.array('B')
         blocks_complete = 0
         for _ in range(blocks_expected):
-            data += self.__xfer_image_block()
+            data += self.__xfer_image_block(ignore_csum=True)
             blocks_complete += 1
             logging.debug('Received block %d', blocks_complete)
             if progress_callback is not None:
@@ -285,9 +282,12 @@ class AbstractCamera(ABC):
         csum = self.checksum(command)
         data = command + csum
 
+        print('sending command + checksum %s' % data)
         self.camera_tx(data)
         data = self.camera_rx(1)
 
+        print('received data %s' % data + " hex %s" % self.hexify(data))
+        
         if data != csum:
             logging.error('command %s csum %s rxcsum %s', self.bufdump(command), self.bufdump(csum), self.bufdump(data))
 
@@ -313,7 +313,8 @@ class AbstractCamera(ABC):
         '''
         Print a string as hex values
         '''
-        return join_char.join(c.encode('hex') for c in s)
+        s = str(s)
+        return join_char.join(hex(ord(c))[2:] for c in s)
 
     def bufdump(self, buf):
         '''

@@ -61,6 +61,11 @@ PIXEL_SIZE = 2
 
 class AbstractCamera(ABC):
 
+    def __init__(self):
+        # set log level to debug
+        logging.basicConfig(level=logging.DEBUG)
+        self.logger = logging.getLogger("all_sky_camera")
+
     @abstractmethod
     def camera_tx(self, data):
         '''
@@ -191,7 +196,7 @@ class AbstractCamera(ABC):
 
         timestamp = datetime.datetime.utcnow()
 
-        logging.debug('Exposure begin: command %s', self.hexify(com))
+        self.logger.debug('Exposure begin: command %s', self.hexify(com))
         self.send_command(com)
 
         # wait until the exposure is finished, with plenty of timing slack to
@@ -199,7 +204,7 @@ class AbstractCamera(ABC):
         # that the camera has ~1 second of hardware latency)
         timeout = exposure + 15.0
         self.camera_rx_until(EXPOSURE_DONE, timeout)
-        logging.debug('Exposure complete')
+        self.logger.debug('Exposure complete')
 
         return timestamp
 
@@ -219,7 +224,7 @@ class AbstractCamera(ABC):
         return -- the raw pixel data from the camera as a Python array of unsigned bytes
         '''
         for i in range(tries):
-            logging.debug('Get Image Block: try %d', i)
+            self.logger.debug('Get Image Block: try %d', i)
 
             # not the first try, transmit checksum error so the camera will try again
             if i > 0:
@@ -230,14 +235,14 @@ class AbstractCamera(ABC):
             timeout = self.camera_timeout_calc(nbytes)
 
             # read the data and checksum
-            logging.debug('Get Image Block: attempt to read %d bytes in %s seconds', nbytes, timeout)
+            self.logger.debug('Get Image Block: attempt to read %d bytes in %s seconds', nbytes, timeout)
             data = self.camera_rx(nbytes, timeout)
             csum_byte = self.camera_rx(1)
-            logging.debug('Get Image Block: finished reading data')
+            self.logger.debug('Get Image Block: finished reading data')
 
             # not enough bytes, therefore transfer failed
             if len(data) != nbytes:
-                logging.debug('Not enough data returned before timeout')
+                self.logger.debug('Not enough data returned before timeout')
                 continue
 
             # calculate XOR-based checksum, convert data to ints, then xor
@@ -251,20 +256,20 @@ class AbstractCamera(ABC):
             # convert csum_byte to an integer
             csum_byte = ord(csum_byte)
 
-            logging.debug('Checksum from camera: %.2x', csum_byte)
-            logging.debug('Checksum calculated: %.2x', csum)
+            self.logger.debug('Checksum from camera: %.2x', csum_byte)
+            self.logger.debug('Checksum calculated: %.2x', csum)
 
             # enough bytes and csum valid, exit the loop
             if ignore_csum or csum == csum_byte:
-                logging.debug('Checksum OK, successfully received block')
+                self.logger.debug('Checksum OK, successfully received block')
                 self.camera_tx(CSUM_OK)
                 return data
 
             # enough bytes and csum invalid, try again
-            logging.debug('Checksum ERROR')
+            self.logger.debug('Checksum ERROR')
 
         # too many retries passed, abort
-        logging.debug('Get Image Block: retries exhausted, abort transfer')
+        self.logger.debug('Get Image Block: retries exhausted, abort transfer')
         self.camera_tx(STOP_XFER)
         raise AllSkyException('Too many errors during image sub-block transfer')
 
@@ -289,11 +294,11 @@ class AbstractCamera(ABC):
         for _ in range(blocks_expected):
             data += self.__xfer_image_block(ignore_csum=True)
             blocks_complete += 1
-            logging.debug('Received block %d', blocks_complete)
+            self.logger.debug('Received block %d', blocks_complete)
             if progress_callback is not None:
                 progress_callback(float(blocks_complete) / blocks_expected * 100)
 
-        logging.debug('Image download complete')
+        self.logger.debug('Image download complete')
         return data
 
 
@@ -309,14 +314,11 @@ class AbstractCamera(ABC):
         csum = self.checksum(command)
         data = command + csum
 
-        print('sending command + checksum %s' % data)
         self.camera_tx(data)
         data = self.camera_rx(1)
 
-        print('received data %s' % data + " hex %s" % self.hexify(data))
-        
         if data != csum:
-            logging.error('command %s csum %s rxcsum %s', self.bufdump(command), self.bufdump(csum), self.bufdump(data))
+            self.logger.error('command %s csum %s rxcsum %s', self.bufdump(command), self.bufdump(csum), self.bufdump(data))
 
         return data == csum
 

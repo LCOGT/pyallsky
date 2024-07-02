@@ -209,8 +209,8 @@ def maximize_dynamic_range(data, mask=None, pct=(2.5, 97.5)):
     if type(data) is not numpy.ndarray:
         raise TypeError('Input was not a numpy.ndarray')
 
-    if str(data.dtype) != 'uint16':
-        raise TypeError('Input did not have type numpy.uint16: was %s' % str(data.dtype))
+    # if str(data.dtype) != 'uint16':
+    #     raise TypeError('Input did not have type numpy.uint16: was %s' % str(data.dtype))
 
     # if no mask was given, use all pixels
     if mask is None:
@@ -238,15 +238,15 @@ def maximize_dynamic_range(data, mask=None, pct=(2.5, 97.5)):
 
 def scale_to_8bit(data):
     '''Scale a 16-bit image to an 8-bit image'''
-    if str(data.dtype) != 'uint16':
-        raise TypeError('Input did not have type numpy.uint16: was %s' % str(data.dtype))
+    # if str(data.dtype) != 'uint16':
+    #     raise TypeError('Input did not have type numpy.uint16: was %s' % str(data.dtype))
 
     return numpy.array(data / 256.0, dtype=numpy.uint8)
 
 def rgb2gray_uint16(data):
     '''Flatten a 16-bit debayered image into a grayscale image'''
-    if str(data.dtype) != 'uint16':
-        raise TypeError('Input did not have type numpy.uint16: was %s' % str(data.dtype))
+    # if str(data.dtype) != 'uint16':
+    #     raise TypeError('Input did not have type numpy.uint16: was %s' % str(data.dtype))
 
     return numpy.dot(data[...,:3], [0.299, 0.587, 0.114])
 

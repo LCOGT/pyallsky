@@ -14,9 +14,11 @@ class TcpCamera(AbstractCamera):
 
     '''
     def __init__(self, host, port):
+        super().__init__()
         self.host = host
         self.port = port
         self.connect(host, port)
+
 
     def connect(self, host, port):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -26,7 +28,6 @@ class TcpCamera(AbstractCamera):
             print('Error connecting to camera: %s' % e)
 
     def camera_tx(self, data):
-        print('sending data: %s' % data)
         for char in data:
             self.socket.send(char.encode())
 

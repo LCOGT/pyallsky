@@ -4,7 +4,6 @@ FROM python:3.11-buster
 WORKDIR /app/
 
 COPY setup.py ./
-COPY allsky_scheduler.conf ./
 COPY ./pyallsky/ ./pyallsky
 COPY ./bin ./bin
 

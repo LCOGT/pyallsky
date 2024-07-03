@@ -13,4 +13,4 @@ RUN python setup.py install
 ENV PYTHONUNBUFFERED=1
 
 ENTRYPOINT ["/app/bin/allsky_scheduler"]
-CMD ["-f", "-c", "/app/allsky_scheduler.conf"]
+CMD ["-f", "-c", "$CONFIG_FILE"]

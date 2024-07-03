@@ -29,7 +29,12 @@ class TcpCamera(AbstractCamera):
 
     def camera_tx(self, data):
         for char in data:
-            self.socket.send(char.encode())
+            if isinstance(char, str):
+                self.socket.send(char.encode())
+            elif isinstance(char, int):
+                self.socket.send(bytes([char]))
+            else:
+                self.socket.send(char)
 
     def camera_rx(self, nbytes, timeout=FIXED_TCP_IMAGE_READ_TIMEOUT_SECONDS):
         tstart = time.time()

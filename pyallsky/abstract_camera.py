@@ -228,7 +228,7 @@ class AbstractCamera(ABC):
 
             # not the first try, transmit checksum error so the camera will try again
             if i > 0:
-                self.camera_tx(CSUM_ERROR)
+                self.camera_tx(CSUM_ERROR.encode())
 
             # calculate number of bytes and expected transfer time
             nbytes = expected * PIXEL_SIZE
@@ -262,7 +262,7 @@ class AbstractCamera(ABC):
             # enough bytes and csum valid, exit the loop
             if ignore_csum or csum == csum_byte:
                 self.logger.debug('Checksum OK, successfully received block')
-                self.camera_tx(CSUM_OK)
+                self.camera_tx(CSUM_OK.encode())
                 return data
 
             # enough bytes and csum invalid, try again
@@ -270,7 +270,7 @@ class AbstractCamera(ABC):
 
         # too many retries passed, abort
         self.logger.debug('Get Image Block: retries exhausted, abort transfer')
-        self.camera_tx(STOP_XFER)
+        self.camera_tx(STOP_XFER.encode())
         raise AllSkyException('Too many errors during image sub-block transfer')
 
 
@@ -311,8 +311,10 @@ class AbstractCamera(ABC):
         return -- True on success, False otherwise
         '''
 
+        if isinstance(command, str):
+            command = command.encode()
         csum = self.checksum(command)
-        data = command + csum
+        data = command + csum.encode()
 
         self.camera_tx(data)
         data = self.camera_rx(1)

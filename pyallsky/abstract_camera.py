@@ -334,6 +334,8 @@ class AbstractCamera(ABC):
         '''
         cs = 0
         for b in command:
+            if isinstance(command, str):
+                b = ord(b)
             csb = ~b & 0x7F
             cs = cs ^ csb
         return chr(cs)

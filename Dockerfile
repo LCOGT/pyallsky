@@ -12,4 +12,4 @@ RUN python setup.py install
 # disable buffering so that logs are rendered to stdout asap
 ENV PYTHONUNBUFFERED=1
 
-CMD ["sh", "-c", "/app/bin/allsky_scheduler $CONFIG_FILE"]
+CMD ["sh", "-c", "/app/bin/allsky_scheduler -f -c $CONFIG_FILE"]

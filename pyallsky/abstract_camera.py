@@ -192,7 +192,7 @@ class AbstractCamera(ABC):
         exptype = EXP_DARK_ONLY if dark else EXP_LIGHT_ONLY
 
         exp = struct.pack('I', int(exptime))[:3]
-        com = TAKE_IMAGE + exp[::-1].decode() + BIN_1X1_FULL + exptype
+        com = (TAKE_IMAGE.encode() + exp[::-1] + BIN_1X1_FULL.encode() + exptype.encode())
 
         timestamp = datetime.datetime.utcnow()
 

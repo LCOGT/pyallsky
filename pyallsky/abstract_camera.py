@@ -317,12 +317,12 @@ class AbstractCamera(ABC):
         data = command + csum.encode()
 
         self.camera_tx(data)
-        data = self.camera_rx(1)
+        rxsum = self.camera_rx(1)
 
-        if data != csum:
-            self.logger.error('command %s csum %s rxcsum %s', self.bufdump(command), self.bufdump(csum), self.bufdump(data))
+        if rxsum[0:1] != csum.encode():
+            self.logger.error('command %s csum %s rxsum %s', self.bufdump(command), self.bufdump(csum), self.bufdump(rxsum))
 
-        return data == csum
+        return rxsum[0:1] == csum.encode()
 
     def checksum(self, command):
         '''

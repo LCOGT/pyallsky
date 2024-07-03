@@ -334,7 +334,7 @@ class AbstractCamera(ABC):
         '''
         cs = 0
         for b in command:
-            csb = ~ord(b) & 0x7F
+            csb = ~b & 0x7F
             cs = cs ^ csb
         return chr(cs)
 

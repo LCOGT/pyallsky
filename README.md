@@ -9,8 +9,10 @@ case they disappear off of the Internet.
 
 Works on Linux (including Raspberry Pi) and Mac OSX, untested on Windows but no reason it shouldn't work.
 
+The Jenkinsfile in this project builds a Docker image that can be used to run the application. This is the intended way to run the application for future deployments with the Moxa NPort 5100a serial to ethernet adapter.
 Requirements
 ------------
+* [Moxa NPort 5100a serial to ethernet adapter](https://www.allied-automation.com/wp-content/uploads/2015/02/Moxa_User_Manual_NPort_5100A_Series_Users_Manual_v4.pdf)
 * [OSX USB to Serial driver](http://plugable.com/drivers/prolific/)
 * [Python 2.7](http://python.org)
 

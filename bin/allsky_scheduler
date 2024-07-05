@@ -19,20 +19,21 @@ import logging
 import argparse
 import datetime
 import traceback
-import ConfigParser
+import configparser
 from collections import namedtuple
 
 import ephem
 import numpy
 from daemonize import Daemonize
 
-from pyallsky import AllSkyCamera
 from pyallsky import AllSkyDeviceConfiguration
 from pyallsky import AllSkyImage
 from pyallsky import AllSkyImageProcessor
-from pyallsky import capture_image_device
 from pyallsky import is_supported_file_type
-from pyallsky.util import setup_logging
+from pyallsky.imagecapture import capture_image_camera
+from pyallsky.serial_camera import SerialCamera
+from pyallsky.tcp_camera import TcpCamera
+from pyallsky.util import setup_logging, is_network_device
 
 ################################################################################
 # Sun Ephemeris Calculations
@@ -168,9 +169,9 @@ def get_configuration(filename):
     '''Read the general section from the configuration file into a GeneralConfiguration object'''
 
     # read configuration file
-    config = ConfigParser.ConfigParser()
+    config = configparser.ConfigParser()
     with open(filename, 'r') as f:
-        config.readfp(f)
+        config.read_file(f)
 
     d = {}
     d['siteid'] = config.get('general', 'siteid')
@@ -199,8 +200,14 @@ def get_configuration(filename):
 class AllSkyCameraInfo(object):
     '''Object to hold information about a single AllSkyCamera'''
     def __init__(self, device_config):
-        self.cam = AllSkyCamera(device_config.device)
-        self.baudrate = self.cam.get_baudrate()
+        if is_network_device(device_config.device):
+            host, port = device_config.device.split(':')
+            self.cam = TcpCamera(host, port)
+            self.baudrate = 115200
+        else:
+            self.cam = SerialCamera(device_config.device)
+            self.baudrate = self.cam.get_baudrate()
+
         self.serialno = self.cam.serial_number()
         self.fwvers = self.cam.firmware_version()
         self.heating = False
@@ -286,7 +293,7 @@ def save_images(config, sun_ephem, processor):
 
         try:
             os.symlink(source, link_name)
-        except OSError, ex:
+        except OSError as ex:
             logging.error('Symlink creation error: %s', str(ex))
 
 ################################################################################
@@ -303,8 +310,8 @@ class MainLoopState(object):
 
         # fetch static information about day camera
         try:
-            self.camera_info['day'] = AllSkyCameraInfo(config.day)
-        except Exception, ex:
+            self.camera_info['day'] = self.day_camera
+        except Exception as ex:
             logging.error('Error communicating with day camera: %s', str(ex))
             for line in traceback.format_exc().splitlines():
                 logging.error(line)
@@ -317,8 +324,8 @@ class MainLoopState(object):
 
         # fetch static information about night camera
         try:
-            self.camera_info['night'] = AllSkyCameraInfo(config.night)
-        except Exception, ex:
+            self.camera_info['night'] = self.night_camera
+        except Exception as ex:
             logging.error('Error communicating with night camera: %s', str(ex))
             for line in traceback.format_exc().splitlines():
                 logging.error(line)
@@ -330,10 +337,10 @@ class MainLoopState(object):
             logging.warning('Night camera baudrate less than 115200, expect slow image capture!')
 
     def heating_control(self, turn_on, day_or_night):
-        if day_or_night is 'day' and turn_on:
+        if day_or_night == 'day' and turn_on:
             self.day_camera.cam.activate_heater()
             self.night_camera.cam.deactivate_heater()
-        elif day_or_night is 'night' and turn_on:
+        elif day_or_night == 'night' and turn_on:
             self.day_camera.cam.deactivate_heater()
             self.night_camera.cam.activate_heater()
         else:
@@ -370,8 +377,13 @@ def main_loop_step(config, user, loopstate):
 
     loopstate.heating_control(device_config.heating, sun_ephem.state)
 
+    if sun_ephem.state == 'day':
+        camera = loopstate.day_camera.cam
+    else:
+        camera = loopstate.night_camera.cam
+
     # capture the next image / control the heater
-    image = capture_image_device(device_config.device, exposure)
+    image = capture_image_camera(camera, exposure)
 
     # we don't have a dark current image yet
     dark_image = None
@@ -385,7 +397,7 @@ def main_loop_step(config, user, loopstate):
         age = utctime - loopstate.dark.timestamp
         if age > datetime.timedelta(seconds=config.dark_interval):
             logging.info('Capturing Dark')
-            loopstate.dark = capture_image_device(device_config.device, exposure, dark=True)
+            loopstate.dark = capture_image_camera(camera, exposure, dark=True)
 
         # use the dark current image this time around the loop
         dark_image = loopstate.dark
@@ -429,7 +441,7 @@ def main_loop(config):
     while True:
         try:
             main_loop_step(config, user, loopstate)
-        except Exception, ex:
+        except Exception as ex:
             logging.error('Exception: %s', str(ex))
             for line in traceback.format_exc().splitlines():
                 logging.error(line)
@@ -452,6 +464,9 @@ def set_serialport_groups(config):
     Runs before dropping privileges to set our process to belong to the group
     or groups that own the serial port devices.
     '''
+    if ':' in config.day.device or ':' in config.night.device:
+        logging.info('Skipping group setup for TCP devices')
+        return
     groups = [
         os.stat(config.day.device).st_gid,
         os.stat(config.night.device).st_gid,

@@ -20,3 +20,11 @@ def setup_logging(level=logging.INFO, stream=sys.stdout):
     # and hook it all together
     ch.setFormatter(formatter)
     logger.addHandler(ch)
+
+
+def is_network_device(device):
+    # a network device is identified by having a host followed by a colon followed by an integer port
+    if ':' in device:
+        host, port = device.split(':')
+        return bool(host and port.isdigit())
+    return False

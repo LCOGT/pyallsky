@@ -7,6 +7,9 @@ Image processing for SBIG AllSky 340/340C
 import logging
 from collections import namedtuple
 
+import os
+import stat
+
 import fitsio
 import numpy
 
@@ -156,6 +159,7 @@ class AllSkyImageProcessor(object):
 
         # write the image
         image.save(filename, quality=95, optimize=True, progressive=True)
+        os.chmod(filename, os.stat(filename).st_mode | stat.S_IROTH)
 
 def create_circle_mask(data, rad_frac=0.92):
     '''

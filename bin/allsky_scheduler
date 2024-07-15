@@ -269,6 +269,7 @@ def save_images(config, sun_ephem, processor):
     # create file output directory if it does not exist
     if not os.path.isdir(directory):
         os.makedirs(directory, mode=0o755)
+        os.chmod(directory, 0o755)
 
     # generate filenames with absolute path
     filename_base = config.siteid + utctime.strftime('-%s-') + sun_ephem.state

@@ -48,8 +48,8 @@ SunEphemeris = namedtuple('SunEphemeris', [
     'state',
 ])
 
-def ephem_get_user(latitude, longitude, elevation):
-    '''Create a pyephem user for the given latitude/longitude/elevation'''
+def ephem_get_user(latitude, longitude, elevation, horizon):
+    '''Create a pyephem user for the given latitude/longitude/elevation/horizon'''
     user = ephem.Observer()
     user.lat = str(latitude)
     user.lon = str(longitude)
@@ -57,7 +57,7 @@ def ephem_get_user(latitude, longitude, elevation):
     # Choose a sun elevation at which the sky is sufficiently dark
     # that lack of stars means cloud. See the discussion here:
     # https://lcogt.slack.com/archives/C02507A9VTR/p1694632682594739
-    user.horizon = '-10.6'
+    user.horizon = str(horizon)
 
     return user
 
@@ -157,6 +157,7 @@ GeneralConfiguration = namedtuple('GeneralConfiguration', [
     'latitude',
     'longitude',
     'elevation',
+    'horizon',
     'interval',
     'dark_interval',
     'directory',
@@ -178,6 +179,7 @@ def get_configuration(filename):
     d['latitude'] = config.getfloat('general', 'latitude')
     d['longitude'] = config.getfloat('general', 'longitude')
     d['elevation'] = config.getfloat('general', 'elevation')
+    d['horizon'] = config.getfloat('general', 'horizon')
     d['interval'] = config.getfloat('general', 'interval')
     d['dark_interval'] = config.getfloat('general', 'dark_interval')
     d['directory'] = config.get('general', 'directory')
@@ -428,7 +430,8 @@ def main_loop(config):
     user = ephem_get_user(
         latitude=config.latitude,
         longitude=config.longitude,
-        elevation=config.elevation
+        elevation=config.elevation,
+        horizon=config.horizon
     )
 
     # create main loop state object
